@@ -22,7 +22,17 @@ from sklearn.model_selection import train_test_split
 def data(input_file):
         indices, offsets, lengths = torch.load(input_file)
         print(f"Data file indices = {indices.size()}", f"offsets = {offsets.size()}, lengths = {lengths.size()}) ")
-        
+        return indices
+
+def truncate(x, feature_cols=range(3), target_cols=range(3), label_col=3, train_len=100, test_len=20):
+        in_, out_, lbl = [], [], []
+        for i in range(len(x)-train_len-test_len+1):
+                in_.append(x[i:(i+train_len), feature_cols].tolist())
+                out_.append(x[(i+train_len):(i+train_len+test_len), target_cols].tolist())
+                lbl.append(x[i+train_len, label_col])
+        return np.array(in_), np.array(out_), np.array(lbl)
+
+
 
 def model(N, M, X_input_train, X_output_train):
         n_hidden = N
@@ -85,25 +95,35 @@ def test(X_input_train, X_input_test, X_output_train, X_output_test):
         data_final = dict()
         for dt, lb in zip([train_pred_detrend, train_true_detrend, test_pred_detrend, test_true_detrend], 
                         ['train_pred', 'train_true', 'test_pred', 'test_true']):
-        dt_x1 = dt[:, :, 0] + (dt[:, :, 2]**2)*x1_trend_param[0] + dt[:, :, 2]*x1_trend_param[1] + x1_trend_param[2]
-        dt_x2 = dt[:, :, 1] + dt[:, :, 2]*x2_trend_param[0] + x2_trend_param[1]
-        data_final[lb] = np.concatenate(
-                [np.expand_dims(dt_x1, axis=2), np.expand_dims(dt_x2, axis=2)], axis=2)
-        print(lb+': {}'.format(data_final[lb].shape))
+                dt_x1 = dt[:, :, 0] + (dt[:, :, 2]**2)*x1_trend_param[0] + dt[:, :, 2]*x1_trend_param[1] + x1_trend_param[2]
+                dt_x2 = dt[:, :, 1] + dt[:, :, 2]*x2_trend_param[0] + x2_trend_param[1]
+                data_final[lb] = np.concatenate(
+                        [np.expand_dims(dt_x1, axis=2), np.expand_dims(dt_x2, axis=2)], axis=2)
+                print(lb+': {}'.format(data_final[lb].shape))
 
 def main():
         #dataset = data("dlrm_datasets/embedding_bag/fbgemm_t856_bs65536_9.pt")
         input_tensor = data("dlrm_datasets/embedding_bag/fbgemm_t856_bs65536_9.pt")
-        x_index = np.array(range(len(input_tensor)))
-
-        X_train, X_test, Y_train, Y_test = train_test_split(dataset[:,:-1], dataset[:,-1].astype(int), test_size=0.2, random_state=None, shuffle=True)
         
-        #input sequence length
+         #input sequence length
         N = 150
         #output sequence length
         M = 10
         # evalutaion window size
-        W = 150
+        #W = 150
+
+        X_in, X_out, lbl = truncate(input_tensor, feature_cols=range(3), target_cols=range(1), 
+                            label_col=1, train_len=N, test_len=M)
+        X_input_train = X_in[np.where(lbl==1)]
+        X_output_train = X_out[np.where(lbl==1)]
+        X_input_test = X_in[np.where(lbl==0)]
+        X_output_test = X_out[np.where(lbl==0)]
+        print(X_input_train.shape, X_output_train.shape)
+        print(X_input_test.shape, X_output_test.shape)
+
+        X_train, X_test, Y_train, Y_test = train_test_split(dataset[:,:-1], dataset[:,-1].astype(int), test_size=0.2, random_state=None, shuffle=True)
+        
+       
         
         model = model(N, M, X_train, Y_train)
         opt = Adam(lr=0.01, clipnorm=1)

@@ -1,4 +1,4 @@
-# opt_dlrm
+# optimizing_dlrm
 
 optimizing dlrm inference by caching/prefetching indices from host cpu main memory/ssd to GPU mem.
 

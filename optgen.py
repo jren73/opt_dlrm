@@ -34,9 +34,11 @@
 '''
 import torch
 import numpy as np
-from collections import defaultdict
+from collections import defaultdict, Counter
 from functools import partial
 from tqdm import tqdm
+import pandas as pd
+
 
 import argparse
 
@@ -52,7 +54,7 @@ def getFurthestAccessBlock():
     maxAccessPosition = -1
     maxAccessBlock = -1
     for cached_block in C:
-        if len(OPT[cached_block]) is 0:
+        if len(OPT[cached_block]) == 0:
             #print ( "Not Acccessing block anymore " + str(cached_block))
             return cached_block            
         if OPT[cached_block][0] > maxAccessPosition:
@@ -75,22 +77,32 @@ if __name__ == "__main__":
   
     block_trace, offsets, lengths = torch.load(traceFile)
 
-    
+    items = np.unique(block_trace)
+    print(f"num of unique indices is {len(items)}")
     blockTraceLength = len(block_trace)
-    cache_size = int(cache_size * blockTraceLength)
+    cache_size = int(cache_size * len(items))
+
+    block_trace = [x.item() for x in block_trace]
+
+    print (f"created block trace list, cache size is {cache_size}")
+
+    cache_hit = np.zeros(blockTraceLength)
+    cache_miss = np.zeros(blockTraceLength)
 
     print (f"created block trace list, cache size is {cache_size}")
     # build OPT 
     
     OPT = defaultdict(partial(np.ndarray,0))
     
+
     seq_number = 0
-    for b in block_trace:
+    for b in tqdm(block_trace):
+    #for b in tqdm(block_tmp):
         OPT[b] = np.append(OPT[b],seq_number)
         seq_number+=1
     
     print ("created OPT dictionary")    
-#    print (OPT)
+
     # run algorithm
     
     hit_count = 0
@@ -100,41 +112,43 @@ if __name__ == "__main__":
     
     seq_number = 0
     for b in tqdm(block_trace):
+    #for b in tqdm(block_tmp):
         seq_number+=1
         if(seq_number % (blockTraceLength / 10) == 0):
             print("Completed "+str(( seq_number * 100 / blockTraceLength)) + " %")
         if b in C:
             print ("HIT " + str(b))
-            np.delete(OPT[b],[0])
-            OPT[b] = OPT[b][1:]
+            #np.delete(OPT[b],[0])
+            #OPT[b] = OPT[b][1:]
             OPT[b] = np.delete(OPT[b],0)
             hit_count+=1
+            cache_hit[seq_number-1] = 1
         else:
             print ("MISS " + str(b))
             miss_count+=1
+            cache_miss[seq_number-1] = b
             if len(C) == cache_size:
                 fblock = getFurthestAccessBlock()
                 assert(fblock != -1)
                 C.remove(fblock)
             C.add(b)
-            np.delete(OPT[b],[0])
-            OPT[b] = OPT[b][1:]
+            #np.delete(OPT[b],[0])
+            #OPT[b] = OPT[b][1:]
             OPT[b] = np.delete(OPT[b],0)
-            print ("CACHE ")
-            print (C)
+            #print ("CACHE ")
+            #print (C)
     
     print ("hit count" + str(hit_count))
     print ("miss count" + str(miss_count))
     
-    cached_trace = block_trace[block_trace.find("embedding_bag/")+len("embedding_bag/"):s.rfind(".pt")] + "cached_trace_opt.txt"
-    f = open(cached_trace, "w")
-    f.write(C)
-    f.close()
+    cached_trace = traceFile[0:traceFile.rfind(".pt")] + "cached_trace_opt.csv"
+    df = pd.DataFrame(cache_hit)
+    df.to_csv(cached_trace)
 
-    dataset_trace = block_trace[block_trace.find("embedding_bag/")+len("embedding_bag/"):s.rfind(".pt")] + "dataset_trace.txt"
-    f = open(dataset_trace, "w")
-    f.write(OPT)
-    f.close()
+    dataset_trace = traceFile[0:traceFile.rfind(".pt")] + "dataset_cache_miss_trace.csv"
+    df = pd.DataFrame(cache_miss)
+    df.to_csv(dataset_trace)
     #print ("Cache")
     #print (C)
     #print (OPT)
+

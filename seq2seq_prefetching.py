@@ -85,11 +85,11 @@ def test(X_input_train, X_input_test, X_output_train, X_output_test):
         data_final = dict()
         for dt, lb in zip([train_pred_detrend, train_true_detrend, test_pred_detrend, test_true_detrend], 
                         ['train_pred', 'train_true', 'test_pred', 'test_true']):
-        dt_x1 = dt[:, :, 0] + (dt[:, :, 2]**2)*x1_trend_param[0] + dt[:, :, 2]*x1_trend_param[1] + x1_trend_param[2]
-        dt_x2 = dt[:, :, 1] + dt[:, :, 2]*x2_trend_param[0] + x2_trend_param[1]
-        data_final[lb] = np.concatenate(
-                [np.expand_dims(dt_x1, axis=2), np.expand_dims(dt_x2, axis=2)], axis=2)
-        print(lb+': {}'.format(data_final[lb].shape))
+                dt_x1 = dt[:, :, 0] + (dt[:, :, 2]**2)*x1_trend_param[0] + dt[:, :, 2]*x1_trend_param[1] + x1_trend_param[2]
+                dt_x2 = dt[:, :, 1] + dt[:, :, 2]*x2_trend_param[0] + x2_trend_param[1]
+                data_final[lb] = np.concatenate(
+                        [np.expand_dims(dt_x1, axis=2), np.expand_dims(dt_x2, axis=2)], axis=2)
+                print(lb+': {}'.format(data_final[lb].shape))
 
 def main():
         #dataset = data("dlrm_datasets/embedding_bag/fbgemm_t856_bs65536_9.pt")

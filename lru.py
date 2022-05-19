@@ -9,6 +9,8 @@ from collections import Counter, deque, defaultdict
 from sklearn import preprocessing
 from sklearn.preprocessing import normalize
 from sklearn.metrics import accuracy_score, confusion_matrix
+import pandas as pd
+import torch
 
 def LFU(blocktrace, frame):
         cache = set()
@@ -16,10 +18,11 @@ def LFU(blocktrace, frame):
         frequency = defaultdict(int)
         
         hit, miss = 0, 0
-        lfu = np.zeros(blocktrace.size())
+        lfu = np.zeros(len(blocktrace))
+        lfu_miss = np.zeros(len(blocktrace))
 
-
-        for i, block in tqdm(blocktrace, leave=False):
+        i=0
+        for block in tqdm(blocktrace, leave=False):
                 frequency[block] += 1
                 if block in cache:
                         hit += 1
@@ -30,7 +33,7 @@ def LFU(blocktrace, frame):
                         cache.add(block)
                         cache_frequency[block] += 1
                         miss += 1
-                        lfu[i] = 0
+                        lfu_miss[i] = block
 
                 else:
                         e, f = min(cache_frequency.items(), key=lambda a: a[1])
@@ -39,21 +42,24 @@ def LFU(blocktrace, frame):
                         cache.add(block)
                         cache_frequency[block] = frequency[block]
                         miss += 1
-                        lfu[i] = 0
+                        lfu_miss[i] = block
+                i = i+1
         
         hitrate = hit / ( hit + miss )
         print(hitrate)
 
-        return lfu
+        return lfu,lfu_miss
 
 def LRU(blocktrace, frame):
         
         cache = set()
         recency = deque()
         hit, miss = 0, 0
-        lru = np.zeros(blocktrace.size())
+        lru = np.zeros(len(blocktrace))
+        lru_miss = np.zeros(len(blocktrace))
         
-        for i, block in tqdm(blocktrace, leave=False):
+        i=0
+        for block in tqdm(blocktrace, leave=False):
                 
                 if block in cache:
                         recency.remove(block)
@@ -65,7 +71,7 @@ def LRU(blocktrace, frame):
                         cache.add(block)
                         recency.append(block)
                         miss += 1
-                        lru[i]=0
+                        lru_miss[i] = block
                 
                 else:
                         cache.remove(recency[0])
@@ -73,12 +79,12 @@ def LRU(blocktrace, frame):
                         cache.add(block)
                         recency.append(block)
                         miss += 1
-                        lru[i]=0
-        
+                        lru_miss[i] = block
+        i=i+1
         hitrate = hit / (hit + miss)
         print(hitrate)
 
-        return lru
+        return lru,lru_miss
 
 if __name__ == "__main__":
         parser = argparse.ArgumentParser(description='caching algorithm.\n')
@@ -92,24 +98,39 @@ if __name__ == "__main__":
 
         block_trace, offsets, lengths = torch.load(traceFile)
 
+        block_trace = [x.item() for x in block_trace]
+        #block_tmp = []
+        #for i in range (10000):
+        #        block_tmp.append(block_trace[i].item())
 
         blockTraceLength = len(block_trace)
         cache_size = int(cache_size * blockTraceLength)
+        print("processed!")
+
+        #blockTraceLength = len(block_tmp)
+        #cache_size = int(cache_size * blockTraceLength)
+
 
         print (f"created block trace list, cache size is {cache_size}")
 
         # build LRU
-        lru_cache = LRU(block_trace, cache_size)
-        cached_trace = block_trace[block_trace.find("embedding_bag/")+len("embedding_bag/"):s.rfind(".pt")] + "dataset_trace_lru.txt"
-        f = open(cached_trace, "w")
-        f.write(lru_cache)
-        f.close() 
+        lru_cache,lru_miss = LRU(block_trace, cache_size)
+        #lru_cache, lru_miss = LRU(block_tmp, cache_size)
+        cached_trace = traceFile[0:traceFile.rfind(".pt")] + "_lru_cache.csv"
+        df = pd.DataFrame(lru_cache)
+        df.to_csv(cached_trace)
+        cached_trace = traceFile[0:traceFile.rfind(".pt")] + "_lru_miss.csv"
+        df = pd.DataFrame(lru_miss)
+        df.to_csv(cached_trace)
 
         # build LFU
-        lfu_cache = LFU(block_trace, cache_size)
-        cached_trace = block_trace[block_trace.find("embedding_bag/")+len("embedding_bag/"):s.rfind(".pt")] + "dataset_trace_lfu.txt"
-        f = open(cached_trace, "w")
-        f.write(lfu_cache)
-        f.close()
+        lfu_cache, lfu_miss = LFU(block_trace, cache_size)
+        #lfu_cache, lfu_miss = LFU(block_tmp, cache_size)
+        cached_trace = traceFile[0:traceFile.rfind(".pt")] + "_lfu_cache.csv"
+        df = pd.DataFrame(lfu_cache)
+        df.to_csv(cached_trace)
+        cached_trace = traceFile[0:traceFile.rfind(".pt")] + "_lfu_miss.csv"
+        df = pd.DataFrame(lfu_miss)
+        df.to_csv(cached_trace)
 
 

@@ -126,6 +126,7 @@ def run(dataset, eval_dataset):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--config', type=str)
     parser.add_argument('--epochs', default=20, type=int)
     parser.add_argument('traceFile', type=str,  help='trace file name\n')
     parser.add_argument('n', type=int,  help='input sequence length N\n')

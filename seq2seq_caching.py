@@ -33,7 +33,10 @@ def truncate(x, feature_cols=range(3), target_cols=range(3), label_col=3, train_
                 lbl.append(x[i+train_len, label_col])
         return np.array(in_), np.array(out_), np.array(lbl)
 
-
+def merge(list1, list2):
+      
+    merged_list = [(list1[i], list2[i]) for i in range(0, len(list1))]
+    return merged_list
 
 def model(N, M, X_input_train, X_output_train):
         n_hidden = N
@@ -126,7 +129,7 @@ def main():
         # evalutaion window size
         #W = 150
 
-        X_in, X_out, lbl = truncate(dataset, feature_cols=range(3), target_cols=range(1), 
+        X_in, X_out, lbl = truncate(merge(dataset, gt), feature_cols=range(3), target_cols=range(1), 
                             label_col=1, train_len=N, test_len=M)
         X_input_train = X_in[np.where(lbl==1)]
         X_output_train = X_out[np.where(lbl==1)]

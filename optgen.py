@@ -141,11 +141,11 @@ if __name__ == "__main__":
     print ("hit count" + str(hit_count))
     print ("miss count" + str(miss_count))
     
-    cached_trace = traceFile[0:traceFile.rfind(".pt")] + "cached_trace_opt.csv"
+    cached_trace = traceFile[0:traceFile.rfind(".pt")] + "_cached_trace_opt.csv"
     df = pd.DataFrame(cache_hit)
     df.to_csv(cached_trace)
 
-    dataset_trace = traceFile[0:traceFile.rfind(".pt")] + "dataset_cache_miss_trace.csv"
+    dataset_trace = traceFile[0:traceFile.rfind(".pt")] + "_dataset_cache_miss_trace.csv"
     df = pd.DataFrame(cache_miss)
     df.to_csv(dataset_trace)
     #print ("Cache")

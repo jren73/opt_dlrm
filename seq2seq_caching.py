@@ -16,7 +16,8 @@ keras.utils.vis_utils.pydot = pyd
 import torch
 import collections 
 from sklearn.model_selection import train_test_split
-
+import argparse
+import pandas as pd
 
 #processing data
 def data(input_file):
@@ -102,17 +103,30 @@ def test(X_input_train, X_input_test, X_output_train, X_output_test):
                 print(lb+': {}'.format(data_final[lb].shape))
 
 def main():
+        parser = argparse.ArgumentParser(description='caching model.\n')
+        parser.add_argument('traceFile', type=str,  help='trace file name\n')
+        parser.add_argument('n', type=int,  help='input sequence length N\n')
+        parser.add_argument('m', type=int,  help='output sequence length\n')
+        args = parser.parse_args() 
+
+        traceFile = args.traceFile
+        M = args.m
+        N = args.n
+        gt_trace = traceFile[0:traceFile.rfind(".pt")] + "_cached_trace_opt.csv"
+
         #dataset = data("dlrm_datasets/embedding_bag/fbgemm_t856_bs65536_9.pt")
-        input_tensor = data("dlrm_datasets/embedding_bag/fbgemm_t856_bs65536_9.pt")
+        dataset = data(traceFile)
+        csvdata = pd.read_csv(gt_trace)
+        gt = csvdata[1].tolist()
         
          #input sequence length
-        N = 150
+        #N = 150
         #output sequence length
-        M = 10
+        #M = 10
         # evalutaion window size
         #W = 150
 
-        X_in, X_out, lbl = truncate(input_tensor, feature_cols=range(3), target_cols=range(1), 
+        X_in, X_out, lbl = truncate(dataset, feature_cols=range(3), target_cols=range(1), 
                             label_col=1, train_len=N, test_len=M)
         X_input_train = X_in[np.where(lbl==1)]
         X_output_train = X_out[np.where(lbl==1)]

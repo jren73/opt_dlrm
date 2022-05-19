@@ -16,13 +16,15 @@ optimizing dlrm inference by caching/prefetching indices from host cpu main memo
         - configurable parameter: (1) cache size: we config cache size based on the number of unique indices. E.g., 0.2 stands for the cache contains 20% of unique indices; (2)data cache trace
 
  - training caching model: seq2seq_caching.py. Configurable parameters:
-   - model input: indices trace; ground-truth: opt cache hit trace
+   - model input: indices trace; ground-truth: opt cache hit trace (binaray array)
    - configurable parameter: (1)input sequence length N; (2)output sequence length M
 
- - training prefetching model: train_predition.py, seq2seq_prefetching.py. Configurable parameters:
-   - input sequence length N, output sequence length M, evaluation window size W
-   - loss function: mean_squared_error or IoU loss
-   - number of lstm stacks
+ - training prefetching model: train_predition.py, seq2seq_prefetching.py. 
+   - model input: indices trace; ground-truth: opt cache miss trace
+   - Configurable parameters:
+     - input sequence length N, output sequence length M, evaluation window size W
+     - loss function: mean_squared_error or IoU loss
+
 
 ## Datasets
   - indices traces: [sythetic dataset for DLRM] (https://github.com/facebookresearch/dlrm_datasets/tree/main/embedding_bag)

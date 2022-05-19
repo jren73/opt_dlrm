@@ -121,7 +121,8 @@ def main():
         dataset = data(traceFile)
         csvdata = pd.read_csv(gt_trace)
         gt = csvdata[1].tolist()
-        
+        #ensure the training and groudtruth has the same size. When we processing groundtruth, we cutout some data
+        dataset = dataset[:len(gt)]
          #input sequence length
         #N = 150
         #output sequence length
@@ -129,7 +130,7 @@ def main():
         # evalutaion window size
         #W = 150
 
-        X_in, X_out, lbl = truncate(merge(dataset, gt), feature_cols=range(3), target_cols=range(1), 
+        X_in, X_out, lbl = truncate(merge(dataset, gt), feature_cols=range(2), target_cols=0, 
                             label_col=1, train_len=N, test_len=M)
         X_input_train = X_in[np.where(lbl==1)]
         X_output_train = X_out[np.where(lbl==1)]

@@ -5,6 +5,8 @@ import random
 
 from torch.autograd import Variable
 
+from opt_dlrm.iou_loss import iou_pytorch
+
 def mask_3d(inputs, seq_len, mask_value=0.):
     batches = inputs.size()[0]
     assert batches == len(seq_len)
@@ -448,6 +450,9 @@ class Seq2Seq(nn.Module):
 
         if config.get('loss') == 'cross_entropy':
             self.loss_fn = torch.nn.CrossEntropyLoss(ignore_index=0)
+            config['loss'] = 'IoU'
+        elif config.get('loss') == 'Intersection_over_Union':
+            self.loss_fn = iou_pytorch(ignore_index=0)
             config['loss'] = 'cross_entropy'
         else:
             self.loss_fn = torch.nn.NLLLoss(ignore_index=0)

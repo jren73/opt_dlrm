@@ -1,13 +1,13 @@
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-
+import time
 import pickle as pkl
 import keras
 from keras.models import Sequential, Model, load_model
 from keras.layers import LSTM, Dense, RepeatVector, TimeDistributed, Input, BatchNormalization, \
     multiply, concatenate, Flatten, Activation, dot
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam 
 from keras.utils.vis_utils import plot_model
 from keras.callbacks import EarlyStopping
 import pydot as pyd
@@ -18,6 +18,12 @@ import collections
 from sklearn.model_selection import train_test_split
 import argparse
 import pandas as pd
+from utils import get_logger
+
+import os
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
+
+_logger = get_logger(__name__)
 
 #processing data
 def data(input_file):
@@ -80,6 +86,7 @@ def model(N, M, X_input_train, X_output_train):
         print(out)
 
 
+
 def test(X_input_train, X_input_test, X_output_train, X_output_test):
         train_pred_detrend = model.predict(X_input_train[:, :, :2])*x_train_max[:2]
         test_pred_detrend = model.predict(X_input_test[:, :, :2])*x_train_max[:2]
@@ -95,15 +102,6 @@ def test(X_input_train, X_input_test, X_output_train, X_output_test):
         test_true_detrend = np.concatenate([test_true_detrend, np.expand_dims(X_output_test[:, :, 2], axis=2)], axis=2)
         print(train_pred_detrend.shape, test_pred_detrend.shape)
 
-
-        data_final = dict()
-        for dt, lb in zip([train_pred_detrend, train_true_detrend, test_pred_detrend, test_true_detrend], 
-                        ['train_pred', 'train_true', 'test_pred', 'test_true']):
-                dt_x1 = dt[:, :, 0] + (dt[:, :, 2]**2)*x1_trend_param[0] + dt[:, :, 2]*x1_trend_param[1] + x1_trend_param[2]
-                dt_x2 = dt[:, :, 1] + dt[:, :, 2]*x2_trend_param[0] + x2_trend_param[1]
-                data_final[lb] = np.concatenate(
-                        [np.expand_dims(dt_x1, axis=2), np.expand_dims(dt_x2, axis=2)], axis=2)
-                print(lb+': {}'.format(data_final[lb].shape))
 
 def main():
         parser = argparse.ArgumentParser(description='caching model.\n')
@@ -147,6 +145,16 @@ def main():
         opt = Adam(lr=0.01, clipnorm=1)
         model.compile(loss='mean_squared_error', optimizer=opt, metrics=['mae'])
         model.summary()
+
+        ep=200
+        es = EarlyStopping(monitor='val_loss', mode='min', patience=50)
+        history = model.fit(X_input_train[:, :, :2], X_output_train[:, :, :2], validation_split=0.2, 
+                        epochs=epc, verbose=1, callbacks=[es], 
+                        batch_size=100)
+        train_mae = history.history['mae']
+        valid_mae = history.history['val_mae']
+        
+        model.save('model_caching_seq2seq.h5')
         
 
 if __name__ == "__main__":

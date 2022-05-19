@@ -138,7 +138,7 @@ if __name__ == '__main__':
     N = args.n
     FLAGS, _ = parser.parse_known_args()
     
-    gt_trace = traceFile[0:traceFile.rfind(".pt")] + "_cached_trace_opt.csv"
+    gt_trace = traceFile[0:traceFile.rfind(".pt")] + "_dataset_cache_miss_trace.csv"
     dataset = data(traceFile) 
     csvdata = pd.read_csv(gt_trace)
     gt = csvdata[1].tolist()

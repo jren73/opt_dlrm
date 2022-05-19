@@ -19,7 +19,7 @@ optimizing dlrm inference by caching/prefetching indices from host cpu main memo
    - model input: indices trace; ground-truth: opt cache hit trace
    - configurable parameter: (1)input sequence length N; (2)output sequence length M
 
- - training prefetching model: seq2seq_prefetching.py. Configurable parameters:
+ - training prefetching model: train_predition.py, seq2seq_prefetching.py. Configurable parameters:
    - input sequence length N, output sequence length M, evaluation window size W
    - loss function: mean_squared_error or IoU loss
    - number of lstm stacks

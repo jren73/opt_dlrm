@@ -23,3 +23,8 @@ optimizing dlrm inference by caching/prefetching indices from host cpu main memo
    - input sequence length N, output sequence length M, evaluation window size W
    - loss function: mean_squared_error or IoU loss
    - number of lstm stacks
+
+## Datasets
+  - indices traces: [sythetic dataset for DLRM] (https://github.com/facebookresearch/dlrm_datasets/tree/main/embedding_bag)
+  - ground truth generated with optgen: [opt caching, lru, lfu] (https://drive.google.com/drive/folders/140HGV4TZ2IPK1dK2BdYrreCPFeVlmaGq?usp=sharing)
+
